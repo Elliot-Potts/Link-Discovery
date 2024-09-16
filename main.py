@@ -18,12 +18,10 @@ logger.setLevel(logging.DEBUG)
 logging.getLogger("flet_core").setLevel(logging.WARNING)
 logging.getLogger("flet_runtime").setLevel(logging.WARNING)
 
-
 # Get a list of network interfaces on Windows
 def get_windows_interfaces():
     interfaces = psutil.net_if_addrs()
     return [iface for iface in interfaces.keys() if not iface.startswith(('lo', 'vir', 'vmnet'))]
-
 
 # Capture and return CDP packet on the specified interface
 async def capture_cdp_packet(interface, timeout=60):
@@ -35,7 +33,6 @@ async def capture_cdp_packet(interface, timeout=60):
         lambda: scapy.sniff(iface=interface, filter="ether dst 01:00:0c:cc:cc:cc", stop_filter=stop_filter, timeout=timeout, count=1)
     )
     return packet[0] if packet else None
-
 
 # Parse CDP packet and return relevant information
 def parse_cdp_packet(packet):
@@ -71,7 +68,6 @@ def parse_cdp_packet(packet):
 
     logger.debug(f"Parsed CDP Info: {cdp_info}")
     return cdp_info
-
 
 # Main function to init Flet app and create UI, capture CDP packet, and display results
 def main(page: ft.Page):
@@ -184,5 +180,13 @@ def main(page: ft.Page):
             results_area
         ], alignment=ft.MainAxisAlignment.START, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=20)
     )
+
+    # Function to update header width when the page resizes
+    def page_resize(e):
+        header.width = page.width
+        page.update()
+
+    # Set the resize event handler
+    page.on_resize = page_resize
 
 ft.app(target=main)
