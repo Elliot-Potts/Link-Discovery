@@ -3,7 +3,6 @@
 
 import flet as ft
 import scapy.all as scapy
-from scapy.layers.l2 import Dot3, LLC, SNAP
 from scapy.contrib.cdp import CDPv2_HDR, CDPMsgDeviceID, CDPMsgSoftwareVersion, CDPMsgPlatform, CDPMsgPortID, CDPMsgCapabilities, CDPMsgNativeVLAN, CDPMsgDuplex, CDPMsgMgmtAddr
 import psutil
 import asyncio
