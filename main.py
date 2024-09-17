@@ -78,14 +78,6 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.START
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
-    # Header component
-    header = ft.Container(
-        content=ft.Text("CDP Discovery Tool", color=ft.colors.WHITE, size=20, weight=ft.FontWeight.BOLD),
-        padding=10,
-        bgcolor=ft.colors.BLACK,
-        width=page.width
-    )
-
     # CDP results area
     results_area = ft.Container(
         content=ft.Column(spacing=10),
@@ -169,10 +161,21 @@ def main(page: ft.Page):
         width=350,
         alignment=ft.alignment.center
     )
+    
+    page.window.height = 640
+    page.window.width = 670
+    
+    page.appbar = ft.AppBar(
+        toolbar_height=60,
+        # leading=ft.IconButton(ft.icons.MENU, icon_color=ft.colors.WHITE),
+        title=ft.Text("CDP Discover", color=ft.colors.WHITE, weight=ft.FontWeight.BOLD),
+        center_title=False,
+        bgcolor=ft.colors.BLACK,
+        actions=[ft.Text("Some text")]
+    )
 
     # Main layout
     page.add(
-        header,
         ft.Column([
             ft.Container(height=20),  # Added padding between header and interface container
             interface_container,
@@ -181,12 +184,6 @@ def main(page: ft.Page):
         ], alignment=ft.MainAxisAlignment.START, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=20)
     )
 
-    # Function to update header width when the page resizes
-    def page_resize(e):
-        header.width = page.width
-        page.update()
-
-    # Set the resize event handler
-    page.on_resize = page_resize
+    page.on_resized = lambda e: print(f"[DBG] Height: {page.window.height} | Width: {page.window.width}")
 
 ft.app(target=main)
