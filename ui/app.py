@@ -77,6 +77,7 @@ class CDPDiscoveryApp:
         if not self.dropdown.value:
             return
 
+        self.capture_button.disabled = True
         self.progress_ring.visible = True
         self.countdown_text.visible = True
         self.results_area.visible = False
@@ -113,7 +114,8 @@ class CDPDiscoveryApp:
                 width=350
             )
             results_column.controls.append(result_card)
-
+        
+        self.capture_button.disabled = False
         self.results_area.visible = True
         self.page.update()
         
