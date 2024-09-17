@@ -12,7 +12,4 @@ A Python application to listen for CDP packets and parse them into a Flet UI.
 
 ## TODO
 
-- CDP info container to be updated (keys bolded; container widened/separated?)
-- Address header width issue
-
-
+- Add LLDP support (?)

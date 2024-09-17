@@ -19,7 +19,8 @@ class CDPDiscoveryApp:
         self.page.vertical_alignment = ft.MainAxisAlignment.START
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         self.page.window.height = 425
-        self.page.window.width = 670
+        self.page.window.width = 540
+        self.page.on_resized = lambda e: print(f"Window resized to W{self.page.window.width}xH{self.page.window.height}")
 
     def create_ui_elements(self):
         self.dropdown = ft.Dropdown(
@@ -97,10 +98,12 @@ class CDPDiscoveryApp:
         if not cdp_info:
             results_column.controls.append(ft.Text("No CDP packets captured. Make sure you're connected to a network with CDP-enabled devices."))
         else:
+            self.page.window.height = 890
             card_content = ft.Column([
                 ft.Text("CDP Packet Information", size=16, weight=ft.FontWeight.BOLD),
-                *[ft.Text(f"{key}: {value}") for key, value in cdp_info.items()]
+                *[ft.Markdown(f"**{key}:** {value}", selectable=True) for key, value in cdp_info.items()]
             ])
+            
             result_card = ft.Container(
                 content=card_content,
                 padding=20,
