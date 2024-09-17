@@ -23,6 +23,13 @@ def get_windows_interfaces():
     interfaces = psutil.net_if_addrs()
     return [iface for iface in interfaces.keys() if not iface.startswith(('lo', 'vir', 'vmnet'))]
 
+# Get the currently active network interface
+def get_active_interface():
+    stats = psutil.net_io_counters(pernic=True)
+    active_interface = max(stats, key=lambda x: stats[x].bytes_sent + stats[x].bytes_recv)
+    print("[DBG] Active Interface:", active_interface)
+    return active_interface
+
 # Capture and return CDP packet on the specified interface
 async def capture_cdp_packet(interface, timeout=60):
     def stop_filter(pkt):
@@ -142,10 +149,13 @@ def main(page: ft.Page):
 
     # Interface selection
     interfaces = get_windows_interfaces()
+    active_interface = get_active_interface()
+    
     dropdown = ft.Dropdown(
         width=300,
         options=[ft.dropdown.Option(iface) for iface in interfaces],
         label="Select Interface",
+        value=active_interface if active_interface in interfaces else None
     )
 
     interface_container = ft.Container(
@@ -162,7 +172,7 @@ def main(page: ft.Page):
         alignment=ft.alignment.center
     )
     
-    page.window.height = 640
+    page.window.height = 425
     page.window.width = 670
     
     page.appbar = ft.AppBar(
@@ -171,7 +181,6 @@ def main(page: ft.Page):
         title=ft.Text("CDP Discover", color=ft.colors.WHITE, weight=ft.FontWeight.BOLD),
         center_title=False,
         bgcolor=ft.colors.BLACK,
-        actions=[ft.Text("Some text")]
     )
 
     # Main layout
@@ -185,5 +194,6 @@ def main(page: ft.Page):
     )
 
     page.on_resized = lambda e: print(f"[DBG] Height: {page.window.height} | Width: {page.window.width}")
+
 
 ft.app(target=main)
