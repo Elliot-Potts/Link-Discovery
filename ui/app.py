@@ -7,6 +7,7 @@ from utils.logger import logger
 class CDPDiscoveryApp:
     def __init__(self, page: ft.Page):
         self.page = page
+        self.page.window.icon = "icon.png"
         self.setup_page()
         self.create_ui_elements()
         self.layout_ui()
@@ -97,9 +98,20 @@ class CDPDiscoveryApp:
         results_column.controls.clear()
 
         if not cdp_info:
-            results_column.controls.append(ft.Text("No CDP packets captured. Make sure you're connected to a network with CDP-enabled devices."))
+            error_card = ft.Container(
+                content=ft.Column([
+                    ft.Text("Error", size=16, weight=ft.FontWeight.BOLD),
+                    ft.Text("No CDP packets captured. Make sure you're connected to a network with CDP-enabled devices.")
+                ]),
+                padding=20,
+                bgcolor=ft.colors.WHITE,
+                border_radius=10,
+                border=ft.border.all(1, ft.colors.GREY_400),
+                width=350
+            )
+            self.page.window.height = 530
+            results_column.controls.append(error_card)
         else:
-            self.page.window.height = 890
             card_content = ft.Column([
                 ft.Text("CDP Packet Information", size=16, weight=ft.FontWeight.BOLD),
                 *[ft.Markdown(f"**{key}:** {value}", selectable=True) for key, value in cdp_info.items()]
@@ -113,8 +125,9 @@ class CDPDiscoveryApp:
                 border=ft.border.all(1, ft.colors.GREY_400),
                 width=350
             )
+            self.page.window.height = 890
             results_column.controls.append(result_card)
-        
+
         self.capture_button.disabled = False
         self.results_area.visible = True
         self.page.update()
