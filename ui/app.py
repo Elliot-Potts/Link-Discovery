@@ -7,7 +7,6 @@ from utils.logger import logger
 class CDPDiscoveryApp:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.page.window.icon = "icon.png"
         self.setup_page()
         self.create_ui_elements()
         self.layout_ui()
