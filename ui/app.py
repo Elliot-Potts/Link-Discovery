@@ -18,7 +18,7 @@ class CDPDiscoveryApp:
         self.page.spacing = 0
         self.page.vertical_alignment = ft.MainAxisAlignment.START
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-        self.page.window.height = 425
+        self.page.window.height = 400
         self.page.window.width = 540
         self.page.on_resized = lambda e: print(f"Window resized to W{self.page.window.width}xH{self.page.window.height}")
 
@@ -84,6 +84,7 @@ class CDPDiscoveryApp:
 
         self.capture_button.disabled = True
         self.progress_ring.visible = True
+        self.page.window.height = 480
         self.countdown_text.visible = True
         self.results_area.visible = False
         self.page.update()
