@@ -12,7 +12,7 @@ class CDPDiscoveryApp:
         self.layout_ui()
 
     def setup_page(self):
-        self.page.title = "CDP Discovery Tool"
+        self.page.title = "Link Discovery Tool"
         self.page.theme_mode = ft.ThemeMode.LIGHT
         self.page.padding = 0
         self.page.spacing = 0
@@ -29,9 +29,13 @@ class CDPDiscoveryApp:
             label="Select Interface",
             value=get_active_interface()
         )
-        self.capture_button = ft.ElevatedButton("Capture CDP Packet", on_click=self.capture_button_click)
+        self.discovery_protocol_checkbox = ft.Row([
+            ft.Checkbox(label="CDP", value=True), 
+            ft.Checkbox(label="LLDP", value=False)
+        ], alignment=ft.MainAxisAlignment.CENTER)
+        self.capture_button = ft.ElevatedButton("Capture Discovery Packet", on_click=self.capture_button_click)
         self.progress_ring = ft.ProgressRing(visible=False)
-        self.countdown_text = ft.Text("Waiting for CDP packet... (max 60 seconds)", visible=False)
+        self.countdown_text = ft.Text("Waiting for discovery packets... (max 60 seconds)", visible=False)
         self.results_area = ft.Container(
             content=ft.Column(spacing=10),
             visible=False
@@ -42,6 +46,7 @@ class CDPDiscoveryApp:
             content=ft.Column([
                 ft.Text("Select Network Interface", size=16, weight=ft.FontWeight.BOLD),
                 self.dropdown,
+                self.discovery_protocol_checkbox,
                 self.capture_button
             ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             padding=20,
@@ -59,7 +64,7 @@ class CDPDiscoveryApp:
 
         self.page.appbar = ft.AppBar(
             toolbar_height=60,
-            title=ft.Text("CDP Discover", color=ft.colors.WHITE, weight=ft.FontWeight.BOLD),
+            title=ft.Text("Link Discover", color=ft.colors.WHITE, weight=ft.FontWeight.BOLD),
             center_title=False,
             bgcolor=ft.colors.BLACK,
         )
