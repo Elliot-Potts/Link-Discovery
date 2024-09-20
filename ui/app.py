@@ -39,7 +39,7 @@ class DiscoveryApp:
         self.progress_ring = ft.ProgressRing(visible=False)
         self.countdown_text = ft.Text("Waiting for discovery packets... (max 60 seconds)", visible=False)
         self.results_area = ft.Container(
-            content=ft.Column(spacing=10),
+            content=ft.Row(spacing=10, alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.START),
             visible=False
         )
 
@@ -126,7 +126,9 @@ class DiscoveryApp:
         results = {}
         async for result in capture_and_parse_packets(self.dropdown.value, protocols):
             if isinstance(result, dict):
+                # Update the results dictionary with the new protocol information
                 results.update(result)
+                # Extract protocol from the result dictionary
                 protocol = next(iter(result))
                 info = result[protocol]
                 result_card = self.create_info_card(f"{protocol} Packet Information", info)
