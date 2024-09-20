@@ -78,6 +78,27 @@ class CDPDiscoveryApp:
             ], alignment=ft.MainAxisAlignment.START, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=20)
         )
 
+    def create_info_card(self, title, info_dict=None, error_message=None):
+        if info_dict:
+            card_content = ft.Column([
+                ft.Text(title, size=16, weight=ft.FontWeight.BOLD),
+                *[ft.Markdown(f"**{key}:** {value}", selectable=True) for key, value in info_dict.items()]
+            ])
+        else:
+            card_content = ft.Column([
+                ft.Text("Error", size=16, weight=ft.FontWeight.BOLD),
+                ft.Text(error_message)
+            ])
+
+        return ft.Container(
+            content=card_content,
+            padding=20,
+            bgcolor=ft.colors.WHITE,
+            border_radius=10,
+            border=ft.border.all(1, ft.colors.GREY_400),
+            width=350
+        )
+
     async def capture_button_click(self, e):
         if not self.dropdown.value:
             return
@@ -103,37 +124,17 @@ class CDPDiscoveryApp:
         results_column.controls.clear()
 
         if not cdp_info:
-            error_card = ft.Container(
-                content=ft.Column([
-                    ft.Text("Error", size=16, weight=ft.FontWeight.BOLD),
-                    ft.Text("No CDP packets captured. Make sure you're connected to a network with CDP-enabled devices.")
-                ]),
-                padding=20,
-                bgcolor=ft.colors.WHITE,
-                border_radius=10,
-                border=ft.border.all(1, ft.colors.GREY_400),
-                width=350
+            error_card = self.create_info_card(
+                title="Error",
+                error_message="No CDP packets captured. Make sure you're connected to a network with CDP-enabled devices."
             )
-            self.page.window.height = 530
+            self.page.window.height = 560
             results_column.controls.append(error_card)
         else:
-            card_content = ft.Column([
-                ft.Text("CDP Packet Information", size=16, weight=ft.FontWeight.BOLD),
-                *[ft.Markdown(f"**{key}:** {value}", selectable=True) for key, value in cdp_info.items()]
-            ])
-            
-            result_card = ft.Container(
-                content=card_content,
-                padding=20,
-                bgcolor=ft.colors.WHITE,
-                border_radius=10,
-                border=ft.border.all(1, ft.colors.GREY_400),
-                width=350
-            )
-            self.page.window.height = 890
+            result_card = self.create_info_card("CDP Packet Information", cdp_info)
+            self.page.window.height = 930
             results_column.controls.append(result_card)
 
         self.capture_button.disabled = False
         self.results_area.visible = True
         self.page.update()
-        
