@@ -7,6 +7,7 @@ from scapy.contrib.lldp import (
     LLDPDUTimeToLive, LLDPDUSystemDescription
 )
 from utils.logger import logger
+import ipaddress
 
 async def capture_packet(interface, protocol, timeout=1):
     def stop_filter(pkt):
@@ -58,8 +59,51 @@ def parse_lldp_packet(packet):
     lldp_info = {}
     
     if LLDPDU in packet:
-        # TODO - Implement LLDP Packet Parsing
-        pass
+        # Chassis ID
+        chassis_id_layer = packet.getlayer(LLDPDUChassisID)
+        if chassis_id_layer:
+            lldp_info['Chassis ID'] = f"{chassis_id_layer.subtype}: {chassis_id_layer.id}"
+
+        # Port ID
+        port_id_layer = packet.getlayer(LLDPDUPortID)
+        if port_id_layer:
+            lldp_info['Port ID'] = port_id_layer.id.decode('utf-8', errors='ignore')
+
+        # Time To Live
+        ttl_layer = packet.getlayer(LLDPDUTimeToLive)
+        if ttl_layer:
+            lldp_info['TTL'] = ttl_layer.ttl
+
+        # System Name
+        system_name_layer = packet.getlayer(LLDPDUSystemName)
+        if system_name_layer:
+            lldp_info['System Name'] = system_name_layer.system_name.decode('utf-8', errors='ignore')
+
+        # System Description
+        system_desc_layer = packet.getlayer(LLDPDUSystemDescription)
+        if system_desc_layer:
+            lldp_info['System Description'] = system_desc_layer.description.decode('utf-8', errors='ignore')
+
+        # Port Description
+        port_desc_layer = packet.getlayer(LLDPDUPortDescription)
+        if port_desc_layer:
+            lldp_info['Port Description'] = port_desc_layer.description.decode('utf-8', errors='ignore')
+
+        # todo - Implement system capabilities (?)
+
+        # Management Address
+        mgmt_addr_layer = packet.getlayer(LLDPDUManagementAddress)
+        if mgmt_addr_layer:
+            try:
+                # Convert hexadecimal to integer
+                ip_int = int.from_bytes(mgmt_addr_layer.management_address, byteorder='big')
+                # Convert integer to IP address
+                ip_address = str(ipaddress.ip_address(ip_int))
+                lldp_info['Management Address'] = ip_address
+                logger.debug(f"Management Address: {ip_address}")
+            except Exception as e:
+                logger.error(f"Error converting management address: {e}")
+                lldp_info['Management Address'] = str(mgmt_addr_layer.management_address)
 
     logger.debug(f"Parsed LLDP Info: {lldp_info}")
     return lldp_info
