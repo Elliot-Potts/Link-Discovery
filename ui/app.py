@@ -118,22 +118,27 @@ class DiscoveryApp:
         self.progress_ring.visible = True
         self.page.window.height = 480
         self.countdown_text.visible = True
-        self.results_area.visible = False
+        self.results_area.visible = True
+        results_column = self.results_area.content
+        results_column.controls.clear()
         self.page.update()
 
         results = {}
         async for result in capture_and_parse_packets(self.dropdown.value, protocols):
             if isinstance(result, dict):
                 results.update(result)
-                break
-            else:
+                protocol = next(iter(result))
+                info = result[protocol]
+                result_card = self.create_info_card(f"{protocol} Packet Information", info)
+                results_column.controls.append(result_card)
+                self.page.window.height += 370
+                self.page.update()
+            elif isinstance(result, int):
                 self.countdown_text.value = f"Waiting for discovery packets... ({result} seconds remaining)"
                 self.page.update()
 
         self.progress_ring.visible = False
         self.countdown_text.visible = False
-        results_column = self.results_area.content
-        results_column.controls.clear()
 
         if not results:
             error_card = self.create_info_card(
@@ -142,12 +147,6 @@ class DiscoveryApp:
             )
             self.page.window.height = 560
             results_column.controls.append(error_card)
-        else:
-            for protocol, info in results.items():
-                result_card = self.create_info_card(f"{protocol} Packet Information", info)
-                results_column.controls.append(result_card)
-            self.page.window.height = 930 + (len(results) - 1) * 370  # Adjust height based on number of cards
 
         self.capture_button.disabled = False
-        self.results_area.visible = True
         self.page.update()

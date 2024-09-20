@@ -89,9 +89,6 @@ def parse_lldp_packet(packet):
         if port_desc_layer:
             lldp_info['Port Description'] = port_desc_layer.description.decode('utf-8', errors='ignore')
 
-        # todo - Implement VLAN ID (somehow?)
-        # todo - Implement system capabilities (?)
-
         # Management Address
         mgmt_addr_layer = packet.getlayer(LLDPDUManagementAddress)
         if mgmt_addr_layer:
@@ -110,18 +107,37 @@ def parse_lldp_packet(packet):
     return lldp_info
 
 async def capture_and_parse_packets(interface, protocols):
-    for i in range(60):
-        for protocol in protocols:
+    async def capture_protocol(protocol):
+        for _ in range(60):
             packet = await capture_packet(interface, protocol)
             if packet:
                 if protocol == "CDP" and CDPv2_HDR in packet:
-                    info = parse_cdp_packet(packet)
+                    logger.debug("CDP Packet found. Parsing...")
+                    return {"CDP": parse_cdp_packet(packet)}
                 elif protocol == "LLDP" and LLDPDU in packet:
-                    info = parse_lldp_packet(packet)
-                else:
-                    continue
+                    logger.debug("LLDP Packet found. Parsing...")
+                    return {"LLDP": parse_lldp_packet(packet)}
+            await asyncio.sleep(1)
+        return None
 
-                if info and len(info) > 1:  # Ensure we have meaningful information
-                    yield {protocol: info}
-                    return  # Stop generator after yielding packet info
-        yield 60 - i
+    tasks = [asyncio.create_task(capture_protocol(protocol)) for protocol in protocols]
+    remaining_time = 60
+
+    while tasks and remaining_time > 0:
+        done, pending = await asyncio.wait(tasks, timeout=1, return_when=asyncio.FIRST_COMPLETED)
+        
+        for task in done:
+            result = await task
+            if result:
+                yield result
+                tasks.remove(task)
+        
+        remaining_time -= 1
+        yield remaining_time
+
+    # Cancel any remaining tasks
+    for task in tasks:
+        task.cancel()
+
+    # Wait for cancelled tasks to finish
+    await asyncio.gather(*tasks, return_exceptions=True)
