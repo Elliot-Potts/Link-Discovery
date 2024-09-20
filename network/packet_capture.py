@@ -9,7 +9,7 @@ from scapy.contrib.lldp import (
 from utils.logger import logger
 import ipaddress
 
-async def capture_packet(interface, protocol, timeout=1):
+async def capture_packet(interface, protocol):
     def stop_filter(pkt):
         return CDPv2_HDR in pkt or LLDPDU in pkt
 
@@ -17,7 +17,7 @@ async def capture_packet(interface, protocol, timeout=1):
     
     packet = await asyncio.get_event_loop().run_in_executor(
         None, 
-        lambda: scapy.sniff(iface=interface, filter=filter_str, stop_filter=stop_filter, timeout=timeout, count=1)
+        lambda: scapy.sniff(iface=interface, filter=filter_str, stop_filter=stop_filter, count=1)
     )
     return packet[0] if packet else None
 
