@@ -89,6 +89,7 @@ def parse_lldp_packet(packet):
         if port_desc_layer:
             lldp_info['Port Description'] = port_desc_layer.description.decode('utf-8', errors='ignore')
 
+        # todo - Implement VLAN ID (somehow?)
         # todo - Implement system capabilities (?)
 
         # Management Address
