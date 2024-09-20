@@ -1,3 +1,3 @@
-from .app import CDPDiscoveryApp
+from .app import DiscoveryApp
 
-__all__ = ['CDPDiscoveryApp']
+__all__ = ['DiscoveryApp']

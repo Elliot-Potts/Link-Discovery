@@ -1,10 +1,10 @@
 import flet as ft
 from network.interface import get_windows_interfaces, get_active_interface
-from network.cdp_capture import capture_and_parse_cdp
+from network.packet_capture import capture_and_parse_packets
 from utils.logger import logger
 
 
-class CDPDiscoveryApp:
+class DiscoveryApp:
     def __init__(self, page: ft.Page):
         self.page = page
         self.setup_page()
@@ -29,9 +29,11 @@ class CDPDiscoveryApp:
             label="Select Interface",
             value=get_active_interface()
         )
+        self.cdp_checkbox = ft.Checkbox(label="CDP", value=True)
+        self.lldp_checkbox = ft.Checkbox(label="LLDP", value=True)
         self.discovery_protocol_checkbox = ft.Row([
-            ft.Checkbox(label="CDP", value=True), 
-            ft.Checkbox(label="LLDP", value=False)
+            self.cdp_checkbox,
+            self.lldp_checkbox
         ], alignment=ft.MainAxisAlignment.CENTER)
         self.capture_button = ft.ElevatedButton("Capture Discovery Packet", on_click=self.capture_button_click)
         self.progress_ring = ft.ProgressRing(visible=False)
@@ -64,7 +66,7 @@ class CDPDiscoveryApp:
 
         self.page.appbar = ft.AppBar(
             toolbar_height=60,
-            title=ft.Text("Link Discover", color=ft.colors.WHITE, weight=ft.FontWeight.BOLD),
+            title=ft.Text("Link Discovery", color=ft.colors.WHITE, weight=ft.FontWeight.BOLD),
             center_title=False,
             bgcolor=ft.colors.BLACK,
         )
@@ -103,6 +105,15 @@ class CDPDiscoveryApp:
         if not self.dropdown.value:
             return
 
+        protocols = []
+        if self.cdp_checkbox.value:
+            protocols.append("CDP")
+        if self.lldp_checkbox.value:
+            protocols.append("LLDP")
+
+        if not protocols:
+            return
+
         self.capture_button.disabled = True
         self.progress_ring.visible = True
         self.page.window.height = 480
@@ -110,30 +121,32 @@ class CDPDiscoveryApp:
         self.results_area.visible = False
         self.page.update()
 
-        cdp_info = None
-        async for remaining_time in capture_and_parse_cdp(self.dropdown.value):
-            self.countdown_text.value = f"Waiting for CDP packet... ({remaining_time} seconds remaining)"
-            self.page.update()
-            if isinstance(remaining_time, dict):  # This means we got CDP info
-                cdp_info = remaining_time
+        results = {}
+        async for result in capture_and_parse_packets(self.dropdown.value, protocols):
+            if isinstance(result, dict):
+                results.update(result)
                 break
+            else:
+                self.countdown_text.value = f"Waiting for discovery packets... ({result} seconds remaining)"
+                self.page.update()
 
         self.progress_ring.visible = False
         self.countdown_text.visible = False
         results_column = self.results_area.content
         results_column.controls.clear()
 
-        if not cdp_info:
+        if not results:
             error_card = self.create_info_card(
                 title="Error",
-                error_message="No CDP packets captured. Make sure you're connected to a network with CDP-enabled devices."
+                error_message="No discovery packets captured. Make sure you're connected to a network with CDP/LLDP-enabled devices."
             )
             self.page.window.height = 560
             results_column.controls.append(error_card)
         else:
-            result_card = self.create_info_card("CDP Packet Information", cdp_info)
-            self.page.window.height = 930
-            results_column.controls.append(result_card)
+            for protocol, info in results.items():
+                result_card = self.create_info_card(f"{protocol} Packet Information", info)
+                results_column.controls.append(result_card)
+            self.page.window.height = 930 + (len(results) - 1) * 370  # Adjust height based on number of cards
 
         self.capture_button.disabled = False
         self.results_area.visible = True

@@ -1,6 +1,6 @@
 import flet as ft
-from ui.app import CDPDiscoveryApp
+from ui.app import DiscoveryApp
 
 if __name__ == "__main__":
-    ft.app(target=CDPDiscoveryApp, assets_dir="assets")
+    ft.app(target=DiscoveryApp, assets_dir="assets")
     
