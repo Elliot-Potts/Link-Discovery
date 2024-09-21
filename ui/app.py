@@ -18,7 +18,7 @@ class DiscoveryApp:
         self.page.spacing = 0
         self.page.vertical_alignment = ft.MainAxisAlignment.START
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-        self.page.window.height = 400
+        self.page.window.height = 355
         self.page.window.width = 540
         self.page.window.min_height = 355
         self.page.window.min_width = 540
