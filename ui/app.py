@@ -20,6 +20,8 @@ class DiscoveryApp:
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         self.page.window.height = 400
         self.page.window.width = 540
+        self.page.window.min_height = 440
+        self.page.window.min_width = 540
         self.page.on_resized = lambda e: print(f"Window resized to W{self.page.window.width}xH{self.page.window.height}")
 
     def create_ui_elements(self):
@@ -73,11 +75,12 @@ class DiscoveryApp:
 
         self.page.add(
             ft.Column([
-                ft.Container(height=20),
+                ft.Container(height=10),
                 interface_container,
+                ft.Container(height=10),
                 progress_column,
                 self.results_area
-            ], alignment=ft.MainAxisAlignment.START, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=20)
+            ], alignment=ft.MainAxisAlignment.START, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10)
         )
 
     def create_info_card(self, title, info_dict=None, error_message=None):
@@ -133,11 +136,22 @@ class DiscoveryApp:
                 info = result[protocol]
                 result_card = self.create_info_card(f"{protocol} Packet Information", info)
                 results_column.controls.append(result_card)
-                self.page.window.height += 370
+
+                if protocol == "CDP":
+                    logger.debug("Setting window height for CDP info.")
+                    self.page.window.height = 890
+                elif protocol == "LLDP" and self.page.window.height < 790:
+                    logger.debug("Setting window height for LLDP info.")
+                    self.page.window.height = 800
+                
                 self.page.update()
             elif isinstance(result, int):
                 self.countdown_text.value = f"Waiting for discovery packets... ({result} seconds remaining)"
                 self.page.update()
+        
+        if len(results.keys()) > 1:
+            print("need to update the fuckin width because its got two columns")
+            self.page.window.width = 780
 
         self.progress_ring.visible = False
         self.countdown_text.visible = False
