@@ -20,8 +20,9 @@ class DiscoveryApp:
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         self.page.window.height = 400
         self.page.window.width = 540
-        self.page.window.min_height = 440
+        self.page.window.min_height = 355
         self.page.window.min_width = 540
+        self.page.scroll = ft.ScrollMode.ALWAYS
         self.page.on_resized = lambda e: print(f"Window resized to W{self.page.window.width}xH{self.page.window.height}")
 
     def create_ui_elements(self):
@@ -42,7 +43,8 @@ class DiscoveryApp:
         self.countdown_text = ft.Text("Waiting for discovery packets... (max 60 seconds)", visible=False)
         self.results_area = ft.Container(
             content=ft.Row(spacing=10, alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.START),
-            visible=False
+            visible=False,
+            margin=ft.margin.only(bottom=20)
         )
 
     def layout_ui(self):
@@ -58,13 +60,17 @@ class DiscoveryApp:
             border_radius=10,
             border=ft.border.all(1, ft.colors.GREY_400),
             width=350,
+            margin=ft.margin.only(top=20),
             alignment=ft.alignment.center
         )
         
-        progress_column = ft.Column([
-            self.progress_ring,
-            self.countdown_text
-        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+        progress_column = ft.Container(
+            content=ft.Column([
+                self.progress_ring,
+                self.countdown_text
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            margin=ft.margin.only(top=20, bottom=20, left=20, right=20),
+        )
 
         self.page.appbar = ft.AppBar(
             toolbar_height=60,
@@ -75,12 +81,10 @@ class DiscoveryApp:
 
         self.page.add(
             ft.Column([
-                ft.Container(height=10),
                 interface_container,
-                ft.Container(height=10),
                 progress_column,
                 self.results_area
-            ], alignment=ft.MainAxisAlignment.START, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10)
+            ], alignment=ft.MainAxisAlignment.START, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10, scroll=ft.ScrollMode.ALWAYS)
         )
 
     def create_info_card(self, title, info_dict=None, error_message=None):
@@ -149,8 +153,8 @@ class DiscoveryApp:
                 self.countdown_text.value = f"Waiting for discovery packets... ({result} seconds remaining)"
                 self.page.update()
         
+        # Increase the window width to accommodate multiple protocol cards
         if len(results.keys()) > 1:
-            print("need to update the fuckin width because its got two columns")
             self.page.window.width = 780
 
         self.progress_ring.visible = False
@@ -166,3 +170,4 @@ class DiscoveryApp:
 
         self.capture_button.disabled = False
         self.page.update()
+        
