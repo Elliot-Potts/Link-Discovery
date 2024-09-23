@@ -64,12 +64,12 @@ class DiscoveryApp:
             alignment=ft.alignment.center
         )
         
-        progress_column = ft.Container(
+        self.progress_column = ft.Container(
             content=ft.Column([
                 self.progress_ring,
                 self.countdown_text
             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-            margin=ft.margin.only(top=20, bottom=20, left=20, right=20),
+            margin=ft.margin.all(20),
         )
 
         self.page.appbar = ft.AppBar(
@@ -82,7 +82,7 @@ class DiscoveryApp:
         self.page.add(
             ft.Column([
                 interface_container,
-                progress_column,
+                self.progress_column,
                 self.results_area
             ], alignment=ft.MainAxisAlignment.START, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10, scroll=ft.ScrollMode.ALWAYS)
         )
@@ -121,9 +121,10 @@ class DiscoveryApp:
         if not protocols:
             return
 
-        self.capture_button.disabled = True
-        self.progress_ring.visible = True
         self.page.window.height = 480
+        self.capture_button.disabled = True
+        self.progress_column.margin = ft.margin.all(20)
+        self.progress_ring.visible = True
         self.countdown_text.visible = True
         self.results_area.visible = True
         results_column = self.results_area.content
@@ -143,10 +144,10 @@ class DiscoveryApp:
 
                 if protocol == "CDP":
                     logger.debug("Setting window height for CDP info.")
-                    self.page.window.height = 890
+                    self.page.window.height = 920
                 elif protocol == "LLDP" and self.page.window.height < 790:
                     logger.debug("Setting window height for LLDP info.")
-                    self.page.window.height = 800
+                    self.page.window.height = 920
                 
                 self.page.update()
             elif isinstance(result, int):
@@ -157,6 +158,7 @@ class DiscoveryApp:
         if len(results.keys()) > 1:
             self.page.window.width = 780
 
+        self.progress_column.margin = ft.margin.only(0)
         self.progress_ring.visible = False
         self.countdown_text.visible = False
 
