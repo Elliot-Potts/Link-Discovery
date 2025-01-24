@@ -1,3 +1,5 @@
+"""Packet capture module - handles packet capture and parsing."""
+
 import asyncio
 import scapy.all as scapy
 from scapy.contrib.cdp import (
@@ -14,6 +16,7 @@ from utils.logger import logger
 import ipaddress
 
 async def capture_packet(interface, protocol):
+    """Capture a packet from the specified interface."""
     def stop_filter(pkt):
         return CDPv2_HDR in pkt or LLDPDU in pkt
 
@@ -26,6 +29,7 @@ async def capture_packet(interface, protocol):
     return packet[0] if packet else None
 
 def parse_cdp_packet(packet):
+    """Parse a CDP packet"""
     cdp_info = {}
     if CDPv2_HDR in packet:
         cdp_layer = packet[CDPv2_HDR]
@@ -61,6 +65,7 @@ def parse_cdp_packet(packet):
     return cdp_info
 
 def parse_lldp_packet(packet):
+    """Parse an LLDP packet."""
     lldp_info = {}
     
     if LLDPDU in packet:
@@ -112,6 +117,7 @@ def parse_lldp_packet(packet):
     return lldp_info
 
 async def capture_and_parse_packets(interface, protocols):
+    """Main function for combining packet capture and parse utilities."""
     async def capture_protocol(protocol):
         for _ in range(60):
             packet = await capture_packet(interface, protocol)

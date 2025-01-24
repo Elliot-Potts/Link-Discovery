@@ -1,3 +1,5 @@
+"""Network module init file for the Link Discovery Tool."""
+
 from .interface import get_windows_interfaces, get_active_interface
 from .packet_capture import capture_and_parse_packets
 

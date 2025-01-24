@@ -1,10 +1,14 @@
+"""UI module logic for the Link Discovery Tool."""
+
 import flet as ft
 from network.interface import get_windows_interfaces, get_active_interface
 from network.packet_capture import capture_and_parse_packets
 from utils.logger import logger
 
-
 class DiscoveryApp:
+    """
+    Main class for the Link Discovery Tool.
+    """
     def __init__(self, page: ft.Page):
         self.page = page
         self.setup_page()
@@ -12,6 +16,9 @@ class DiscoveryApp:
         self.layout_ui()
 
     def setup_page(self):
+        """
+        Setup the page.
+        """
         self.page.title = "Link Discovery Tool"
         self.page.theme_mode = ft.ThemeMode.LIGHT
         self.page.padding = 0
@@ -26,6 +33,9 @@ class DiscoveryApp:
         self.page.on_resized = lambda e: print(f"Window resized to W{self.page.window.width}xH{self.page.window.height}")
 
     def create_ui_elements(self):
+        """
+        Create the UI elements.
+        """
         self.dropdown = ft.Dropdown(
             width=300,
             options=[ft.dropdown.Option(iface) for iface in get_windows_interfaces()],
@@ -48,6 +58,9 @@ class DiscoveryApp:
         )
 
     def layout_ui(self):
+        """
+        Layout the UI elements.
+        """
         interface_container = ft.Container(
             content=ft.Column([
                 ft.Text("Select Network Interface", size=16, weight=ft.FontWeight.BOLD),
@@ -63,7 +76,7 @@ class DiscoveryApp:
             margin=ft.margin.only(top=20),
             alignment=ft.alignment.center
         )
-        
+
         self.progress_column = ft.Container(
             content=ft.Column([
                 self.progress_ring,
@@ -88,6 +101,9 @@ class DiscoveryApp:
         )
 
     def create_info_card(self, title, info_dict=None, error_message=None):
+        """
+        Create a generic info card.
+        """
         if info_dict:
             card_content = ft.Column([
                 ft.Text(title, size=16, weight=ft.FontWeight.BOLD),
@@ -108,7 +124,10 @@ class DiscoveryApp:
             width=350
         )
 
-    async def capture_button_click(self, e):
+    async def capture_button_click(self):
+        """
+        Handle request to capture discovery packets.
+        """
         if not self.dropdown.value:
             return
 
@@ -144,16 +163,16 @@ class DiscoveryApp:
 
                 if protocol == "CDP":
                     logger.debug("Setting window height for CDP info.")
-                    self.page.window.height = 920
+                    self.page.window.height = 950
                 elif protocol == "LLDP" and self.page.window.height < 790:
                     logger.debug("Setting window height for LLDP info.")
                     self.page.window.height = 920
-                
+
                 self.page.update()
             elif isinstance(result, int):
                 self.countdown_text.value = f"Waiting for discovery packets... ({result} seconds remaining)"
                 self.page.update()
-        
+
         # Increase the window width to accommodate multiple protocol cards
         if len(results.keys()) > 1:
             self.page.window.width = 780
@@ -172,4 +191,3 @@ class DiscoveryApp:
 
         self.capture_button.disabled = False
         self.page.update()
-        

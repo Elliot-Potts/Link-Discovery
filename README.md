@@ -13,5 +13,4 @@ A Python application to listen for CDP packets and parse them into a Flet UI.
 ## TODO
 
 - Add results export functionality
-- Add side-by-side results cards/support for dual responses
 - Add task cancel button
