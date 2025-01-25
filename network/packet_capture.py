@@ -21,7 +21,7 @@ async def capture_packet(interface, protocol):
         return CDPv2_HDR in pkt or LLDPDU in pkt
 
     filter_str = "ether dst 01:00:0c:cc:cc:cc" if protocol == "CDP" else "ether dst 01:80:c2:00:00:0e"
-    
+
     packet = await asyncio.get_event_loop().run_in_executor(
         None, 
         lambda: scapy.sniff(iface=interface, filter=filter_str, stop_filter=stop_filter, count=1)

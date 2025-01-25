@@ -4,6 +4,8 @@ import flet as ft
 from network.interface import get_windows_interfaces, get_active_interface
 from network.packet_capture import capture_and_parse_packets
 from utils.logger import logger
+from datetime import datetime
+import os
 
 class DiscoveryApp:
     """
@@ -14,6 +16,7 @@ class DiscoveryApp:
         self.setup_page()
         self.create_ui_elements()
         self.layout_ui()
+        self.capture_results = {}
 
     def setup_page(self):
         """
@@ -30,7 +33,7 @@ class DiscoveryApp:
         self.page.window.min_height = 355
         self.page.window.min_width = 540
         self.page.scroll = ft.ScrollMode.ALWAYS
-        self.page.on_resized = lambda e: print(f"Window resized to W{self.page.window.width}xH{self.page.window.height}")
+        # self.page.on_resized = lambda e: print(f"Window resized to W{self.page.window.width}xH{self.page.window.height}")
 
     def create_ui_elements(self):
         """
@@ -49,6 +52,7 @@ class DiscoveryApp:
             self.lldp_checkbox
         ], alignment=ft.MainAxisAlignment.CENTER)
         self.capture_button = ft.ElevatedButton("Capture Discovery Packet", on_click=self.capture_button_click)
+        self.export_button = ft.ElevatedButton("Export Results", on_click=self.export_results, disabled=True)
         self.progress_ring = ft.ProgressRing(visible=False)
         self.countdown_text = ft.Text("Waiting for discovery packets... (max 60 seconds)", visible=False)
         self.results_area = ft.Container(
@@ -66,7 +70,8 @@ class DiscoveryApp:
                 ft.Text("Select Network Interface", size=16, weight=ft.FontWeight.BOLD),
                 self.dropdown,
                 self.discovery_protocol_checkbox,
-                self.capture_button
+                self.capture_button,
+                self.export_button
             ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             padding=20,
             bgcolor=ft.colors.WHITE,
@@ -96,7 +101,7 @@ class DiscoveryApp:
             ft.Column([
                 interface_container,
                 self.progress_column,
-                self.results_area
+                self.results_area,
             ], alignment=ft.MainAxisAlignment.START, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10, scroll=ft.ScrollMode.ALWAYS)
         )
 
@@ -124,7 +129,46 @@ class DiscoveryApp:
             width=350
         )
 
-    async def capture_button_click(self):
+    def export_results(self, e):
+        """
+        Export the results to a text file.
+        """
+        time_now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+        with open(f"discovery_results_{time_now}.txt", "w", encoding="utf-8") as file:
+            # Export CDP results
+            file.write("CDP Results\n")
+            file.write("=" * 15 + "\n\n")
+
+            if "CDP" in self.capture_results:
+                cdp_info = self.capture_results["CDP"]
+                for key, value in cdp_info.items():
+                    file.write(f"{key}: {value}\n")
+            else:
+                file.write("No CDP results available\n")
+
+            file.write("\n\n")
+
+            # Export LLDP results
+            file.write("LLDP Results\n")
+            file.write("=" * 15 + "\n\n")
+
+            if "LLDP" in self.capture_results:
+                lldp_info = self.capture_results["LLDP"]
+                for key, value in lldp_info.items():
+                    file.write(f"{key}: {value}\n")
+            else:
+                file.write("No LLDP results available\n")
+
+        self.page.snack_bar = ft.SnackBar(
+            content=ft.Text("Results exported successfully"),
+            action="Open File",
+            on_action=lambda _: os.startfile(f"discovery_results_{time_now}.txt")
+        )
+        self.page.snack_bar.open = True
+        self.page.update()
+
+    async def capture_button_click(self, e):
         """
         Handle request to capture discovery packets.
         """
@@ -140,6 +184,7 @@ class DiscoveryApp:
         if not protocols:
             return
 
+        self.export_button.disabled = True
         self.page.window.height = 480
         self.capture_button.disabled = True
         self.progress_column.margin = ft.margin.all(20)
@@ -150,11 +195,10 @@ class DiscoveryApp:
         results_column.controls.clear()
         self.page.update()
 
-        results = {}
         async for result in capture_and_parse_packets(self.dropdown.value, protocols):
             if isinstance(result, dict):
                 # Update the results dictionary with the new protocol information
-                results.update(result)
+                self.capture_results.update(result)
                 # Extract protocol from the result dictionary
                 protocol = next(iter(result))
                 info = result[protocol]
@@ -174,14 +218,14 @@ class DiscoveryApp:
                 self.page.update()
 
         # Increase the window width to accommodate multiple protocol cards
-        if len(results.keys()) > 1:
+        if len(self.capture_results.keys()) > 1:
             self.page.window.width = 780
 
         self.progress_column.margin = ft.margin.only(0)
         self.progress_ring.visible = False
         self.countdown_text.visible = False
 
-        if not results:
+        if not self.capture_results:
             error_card = self.create_info_card(
                 title="Error",
                 error_message="No discovery packets captured. Make sure you're connected to a network with CDP/LLDP-enabled devices."
@@ -190,4 +234,5 @@ class DiscoveryApp:
             results_column.controls.append(error_card)
 
         self.capture_button.disabled = False
+        self.export_button.disabled = False
         self.page.update()
