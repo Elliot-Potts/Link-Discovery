@@ -1,6 +1,8 @@
 # CDP-Discover
 
-A Python application to listen for CDP/LLDP packets and parse them into a Flet UI.
+A simple Python application to listen for CDP/LLDP packets and parse them into a Flet UI.
+
+![Image of application](assets/readme/readme_image.png)
 
 
 ## Requirements
