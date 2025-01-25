@@ -17,6 +17,7 @@ class DiscoveryApp:
         self.create_ui_elements()
         self.layout_ui()
         self.capture_results = {}
+        self.capture_cancelled = False
 
     def setup_page(self):
         """
@@ -51,7 +52,17 @@ class DiscoveryApp:
             self.cdp_checkbox,
             self.lldp_checkbox
         ], alignment=ft.MainAxisAlignment.CENTER)
-        self.capture_button = ft.ElevatedButton("Capture Discovery Packet", on_click=self.capture_button_click)
+        self.capture_button = ft.ElevatedButton(
+            "Capture Discovery Packet",
+            on_click=self.capture_button_click,
+        )
+        self.cancel_button = ft.ElevatedButton(
+            "Cancel Capture",
+            on_click=self.cancel_capture,
+            bgcolor=ft.colors.RED_600,
+            color=ft.colors.WHITE,
+            visible=False
+        )
         self.export_button = ft.ElevatedButton("Export Results", on_click=self.export_results, disabled=True)
         self.progress_ring = ft.ProgressRing(visible=False)
         self.countdown_text = ft.Text("Waiting for discovery packets... (max 60 seconds)", visible=False)
@@ -71,6 +82,7 @@ class DiscoveryApp:
                 self.dropdown,
                 self.discovery_protocol_checkbox,
                 self.capture_button,
+                self.cancel_button,
                 self.export_button
             ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             padding=20,
@@ -168,6 +180,20 @@ class DiscoveryApp:
         self.page.snack_bar.open = True
         self.page.update()
 
+    def cancel_capture(self, e):
+        """
+        Cancel the ongoing packet capture.
+        TODO - this is only affecting UI updates.
+        """
+        self.capture_cancelled = True
+        self.cancel_button.visible = False
+        self.capture_button.visible = True
+        self.capture_button.disabled = False
+        self.progress_ring.visible = False
+        self.countdown_text.visible = False
+        self.progress_column.margin = ft.margin.only(0)
+        self.page.update()
+
     async def capture_button_click(self, e):
         """
         Handle request to capture discovery packets.
@@ -184,9 +210,15 @@ class DiscoveryApp:
         if not protocols:
             return
 
+        # Reset cancel flag
+        self.capture_cancelled = False
+
+        # Switch buttons
+        self.capture_button.visible = False
+        self.cancel_button.visible = True
+
         self.export_button.disabled = True
         self.page.window.height = 480
-        self.capture_button.disabled = True
         self.progress_column.margin = ft.margin.all(20)
         self.progress_ring.visible = True
         self.countdown_text.visible = True
@@ -196,6 +228,9 @@ class DiscoveryApp:
         self.page.update()
 
         async for result in capture_and_parse_packets(self.dropdown.value, protocols):
+            if self.capture_cancelled:
+                break
+
             if isinstance(result, dict):
                 # Update the results dictionary with the new protocol information
                 self.capture_results.update(result)
@@ -221,18 +256,22 @@ class DiscoveryApp:
         if len(self.capture_results.keys()) > 1:
             self.page.window.width = 780
 
+        # Reset UI state
+        self.cancel_button.visible = False
+        self.capture_button.visible = True
         self.progress_column.margin = ft.margin.only(0)
         self.progress_ring.visible = False
         self.countdown_text.visible = False
 
-        if not self.capture_results:
-            error_card = self.create_info_card(
-                title="Error",
-                error_message="No discovery packets captured. Make sure you're connected to a network with CDP/LLDP-enabled devices."
-            )
-            self.page.window.height = 560
-            results_column.controls.append(error_card)
+        if not self.capture_cancelled:
+            if not self.capture_results:
+                error_card = self.create_info_card(
+                    title="Error",
+                    error_message="No discovery packets captured. Make sure you're connected to a network with CDP/LLDP-enabled devices."
+                )
+                self.page.window.height = 560
+                results_column.controls.append(error_card)
 
         self.capture_button.disabled = False
-        self.export_button.disabled = False
+        self.export_button.disabled = len(self.capture_results) == 0
         self.page.update()
