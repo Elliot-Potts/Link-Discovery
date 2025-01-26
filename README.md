@@ -1,4 +1,4 @@
-# CDP-Discover
+# Link Discovery
 
 A simple Python application to listen for CDP/LLDP packets and parse them into a Flet UI.
 
